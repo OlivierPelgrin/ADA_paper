@@ -116,11 +116,28 @@ L'article propose que à chaque cycle, le scheduler de threads essaye de former 
 
 Ce mécanisme peut sembler idéal, cependant quelques problèmes émergent pour lesquels les auteurs de l'article proposent des solutions.
 
-La création de nouveaux warps de threads implique qu'un thread peut potentiellement s'exécuter sur n'importe quelle ligne scalaire du pipeline SIMD, imposant que tous les registres soit accessibles de n'importe quelle de ces lignes.
+La création de nouveaux warps de threads implique qu'un thread peut potentiellement s'exécuter sur n'importe quelle ligne scalaire du pipeline SIMD, imposant que tous les registres soit accessibles de n'importe quelle de ces lignes. Or, le plus souvent, chaque ligne scalaire à accès à une \emph{bank} de registre.
+Pour que tout les threads aient accès à tous les registres, il serait nécessaire d'implémenter un réseau d'interconnexion en \emph{crossbar}, et malgré cela, si plusieurs threads tentent d'accéder à la même bank, cela créé un conflit bloquant le pipeline.
 
-\section{Résultats}
+Cette solution n'est donc pas réaliste, au lieu d'utiliser cela, les auteurs de l'article proposent de réunir au sein d'un nouveau warp uniquement des threads utilisant des bank de registres différentes. 
+Dans certains cas, les auteurs notent qu'il peut ne pas être possible de créer des warps plus grands que initialement à cause de cette limitation.
+Les expérimentations montrent cependant que cette solution a des performances proches de ce qu'on obtiendrait dans un cas idéal sans conflit de bank.
 
-graphs
+\subsection{Politique d'ordonnancement}
 
+Pour que la formation dynamique de warps soit efficace, il faut qu'un grands nombre de threads aient le même PC au même moment. Si ce n'est pas le cas, le scheduler ne pourra pas regrouper des threads au sein d'un même warp.
+Les auteurs de l'article ont essayer plusieurs politique d'ordonnancement, celle qu'ils ont retenu consiste à exécuter en priorité les warps ayant le PC majoritaire avant de choisir un nouveau PC. Les expérimentation montrent que ce choix est en général assez performant.
+Cependant, le choix d'une heuristique pour l'ordonnancement nécessiterait un travail plus approfondi qui n'entre pas dans le cadre de l'article.
+
+\section{Conclusion}
+
+Dans cet article, les auteurs montrent qu'avec la démocratisation de l'utilisation de GPUs pour du calcul généraliste, l'inefficacité des architectures SIMD des GPUs à gérer les branchements est devenue problématique.
+Dans leur articles ils proposent diverse amélioration architecturales permettant de grandement améliorer les performances dans des programmes contenant des branchements.
+
+Depuis la publication de cet article, l'utilisation de GPUs pour du calcul généraliste a fortement augmenté, un grand nombre de super-calculateur du TOP500 utilisent des GPUs.
+A l'heure actuelle, les GPUs sont énormément utilisés pour du calcul, avec notamment la démocratisation du \emph{Deep Learning} et des \emph{cryptomonnaies}. 
+
+Les architectures GPUs actuelles sont devenues beaucoup plus flexibles et orientées pour le calcul généraliste qu'à l'époque de la publication de l'article, mais restent toujours fondamentalement des architectures SIMD.
+Cela montre l'intérêt important des travaux présentés dans l'article, puisque que les problématiques étudiées sont toujours d'actualité.
 
 \end{document} 
