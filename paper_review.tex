@@ -43,12 +43,13 @@ Tous les threads exécutent exactement la même instruction en même temps, mais
 Pendant longtemps, cette approche a eu de très bon résultats sur les \emph{shaders} des jeux vidéos. En effet, historiquement, ces shaders sont pauvres en opérations de contrôle, ce qui permet aux warps de s'exécuter du début à la fin de manière synchronisée.
 \\Lors d'opérations de contrôle, il est possible que les threads d'un warp ne peuvent s'exécuter de manière synchronisée, par exemple si des threads prennent une branche différente lors d'un branchement.
 Dans ce cas, il faut exécuter chaque partie du branchement séparément, ce qui peut amener à une sous utilisation de la ligne SIMD, avec seulement un faible nombre de threads s'exécutant simultanément.
-Sur la figure~\ref{IPC}, on peut observer la perte de performance due aux branchements à l'exécution de threads SPMD sur des architectures SIMD.
 
 \begin{figure}[h]
    \caption{\label{IPC} Perte de performance lié aux branchements sur des architectures SIMD}
    \includegraphics[scale=.6]{ipc}
 \end{figure}
+
+Sur la figure~\ref{IPC}, on peut observer la perte de performance due aux branchements à l'exécution de threads SPMD sur des architectures SIMD.
 
 La divergence de branchements au sein d'un warp était à l'époque de la publication de l'article (2007) encore assez peu problématique dans le cadre de shaders de jeu vidéo (ce qui est moins vrai maintenant en 2017). Cependant les applications de calcul généralistes sur GPUs souffraient déjà de ce problème.
 \\Les auteurs de l'article proposent plusieurs mécanismes permettant de réduire significativement l'impact des branchements divergeant sur les architectures SIMD des GPUs.
@@ -61,12 +62,42 @@ Cette méthode est facile à implémenter et permet de gérer la divergence.
 Cependant, il est possible que les threads continuent de diverger lors de branchements divergeant successifs. Il ainsi possible de se retrouver dans une situation où tous les threads d'un warp sont isolés des autres, et s'exécutent les uns après les autres la ligne SIMD.
 De manière évidente, une telle solution est inacceptable sur le plan des performances, ce montre le besoin de solutions plus efficaces pour gérer les branchements.
 
-Dans leur article, les auteurs font plusieurs propositions, la première est un mécanisme de reconvergence des threads dès que possible après un (des) branchements divergeant.
+Dans leur article, les auteurs font plusieurs propositions, la première est un mécanisme de convergence des threads dès que possible après un (des) branchements divergeant.
 
-\subsection{Reconvergence}
+\subsection{Convergence}
 
-Cette première solution consiste à faire reconverger dès que possible des threads ayant divergés pour les re-synchroniser lorsqu'ils se retrouvent à nouveau sur le même flux de contrôle.
+Cette première solution consiste à faire converger dès que possible des threads ayant divergés pour les resynchroniser lorsqu'ils se retrouvent à nouveau sur le même flux de contrôle.
+L'intérêt est notamment d'empêcher les threads de trop diverger en repérant les points de convergence pour recommencer une exécution synchronisée quand c'est possible.
+\\Lors de la détection d'un branchement divergeant, le mécanisme repère le moment où les threads convergent afin de resynchroniser les threads à ce point.
 
+\begin{figure}[h]
+   \caption{\label{BRANCHE} Illustration du mécanisme de convergence}
+   \includegraphics[scale=.45]{branch-re}
+\end{figure}
+
+La figure~\ref{BRANCHE} illustre le mécanisme de convergence de threads proposé dans l'article. Dans cet exemple, figure~\ref{BRANCHE}(a), un warp de 4 threads divergent après l'exécution du block A. Les threads exécutants le block B divergent encore un fois en deux blocks C et D.
+\\Dans ce cas il existe plusieurs opportunités pour faire converger les threads pour resynchroniser leur exécution.
+Tous les threads doivent exécuter le block G, il s'agit donc d'un point de convergence.
+De même, tous les threads exécutant B doivent exécuter E, il vont donc être resynchronisés à ce block.
+
+Les figures~\ref{BRANCHE}(c,d,e) montrent comment il est possible d'implémenter ce mécanisme grâce à une pile. Chaque élément de la pile est un triplet contenant le prochain PC (programme counter), le PC de convergence et un masque d'exécution indiquant quels threads sont concernés par l'entrée.
+Dans l'exemple, lors de la détection du branchement à B, la tête de la pile (TOS) est mise à jour pour prendre en compte le nouveau point de convergence E. Les deux branches C et D sont ajoutées en tête de pile.
+
+
+Pour déterminer le point de convergence des threads, les auteurs de cet article propose d'utiliser un concept issu de la compilation : l'\emph{immediate post-dominator}. Un block X est \emph{post-dominator} d'un block Y si tous les chemins d'exécution de Y vers le block de sortie passent par X. X est un \emph{immediate post-dominator} de Y s'il n'existe aucun \emph{post-dominator} de Y ayant pour \emph{post-dominator} X.
+Les \emph{post-dominator} sont déterminables de manière statique à la compilation.
+
+La convergence de threads au \emph{immediate post-dominator} permet un gain de performance significatif par rapport à une implémentation naïve des branchements sur une architecture SIMD.
+Sur la figure~\ref{IPC}, on peut observer que l'implémentation naïve obtient 20\% des performances d'une machine MIMD d'IPC maximal équivalent et que l'implémentation avec convergence au post-dominator immédiat (PDOM) obtient lui 60\% de l'IPC de la machine MIMD.
+Cette solution, relativement simple à implémenter, permet donc un fort gain d'efficacité sur la gestion des branchements sur les architectures SIMD.
+
+On observe malgré tout que la machine MIMD reste beaucoup plus performante, les auteurs de l'article proposent donc d'autres mécanismes pour améliorer encore la gestion des branchements.
+
+\subsection{Formation dynamique de warps}
+
+Malgré l'utilisation du mécanisme de convergence, on a donc une utilisation sous-optimale de la ligne SIMD lors d'exécution de branchements divergeant. Lors de l'exécution d'un seul warp de threads sur la ligne SIMD, il est malheureusement impossible d'améliorer l'utilisation du matériel.
+Dans la plupart des cas cependant, plusieurs warps exécutent le même programme en même temps.
+Les auteurs de l'article proposent donc d'exploiter cette situation en groupant dynamiquement, à l'exécution, les threads de warps différents exécutant le même flux de contrôle.
 
 \section{Résultats}
 
