@@ -35,14 +35,14 @@ Les GPUs sont depuis devenus très utilisée pour le calcul scientifique grâce 
 A l'origine, les tâches pour lesquels les GPUs ont été créés sont hautement parallélisable par nature (opérations par pixel/vertex), ce qui fait que les GPUs sont des architectures très parallèles.
 \\Pour réduire la complexité des flux de contrôle, la plupart des architectures GPUs utilisent des pipelines single-instruction multiple-data (SIMD). Cela permet un haut niveau de parallélisme pour un coût relativement faible.
 
-Le plus souvent, les GPUs groupent ensemble des threads exécutant le même programme dans des \emph{warps}. Tous les threads d'un warp s'exécutent de manière synchronisée sur une ligne SIMD du GPU.
+Le plus souvent, les GPUs groupent ensemble des threads exécutant le même programme dans des \emph{warps}. Tous les threads d'un warp s'exécutent de manière synchronisée sur un pipeline SIMD du GPU.
 Tous les threads exécutent exactement la même instruction en même temps, mais sur des données différentes.
 
 \subsection{Problématique des flux de contrôle}
 
 Pendant longtemps, cette approche a eu de très bon résultats sur les \emph{shaders} des jeux vidéos. En effet, historiquement, ces shaders sont pauvres en opérations de contrôle, ce qui permet aux warps de s'exécuter du début à la fin de manière synchronisée.
 \\Lors d'opérations de contrôle, il est possible que les threads d'un warp ne peuvent s'exécuter de manière synchronisée, par exemple si des threads prennent une branche différente lors d'un branchement.
-Dans ce cas, il faut exécuter chaque partie du branchement séparément, ce qui peut amener à une sous utilisation de la ligne SIMD, avec seulement un faible nombre de threads s'exécutant simultanément.
+Dans ce cas, il faut exécuter chaque partie du branchement séparément, ce qui peut amener à une sous utilisation du pipeline SIMD, avec seulement un faible nombre de threads s'exécutant simultanément.
 
 \begin{figure}[h]
    \caption{\label{IPC} Perte de performance lié aux branchements sur des architectures SIMD}
@@ -59,7 +59,7 @@ La divergence de branchements au sein d'un warp était à l'époque de la public
 
 La façon naïve de gérer la divergence de branchements au sein d'un warp consiste à sérialiser l'exécution des threads.
 Cette méthode est facile à implémenter et permet de gérer la divergence.
-Cependant, il est possible que les threads continuent de diverger lors de branchements divergeant successifs. Il ainsi possible de se retrouver dans une situation où tous les threads d'un warp sont isolés des autres, et s'exécutent les uns après les autres la ligne SIMD.
+Cependant, il est possible que les threads continuent de diverger lors de branchements divergeant successifs. Il ainsi possible de se retrouver dans une situation où tous les threads d'un warp sont isolés des autres, et s'exécutent les uns après les autres sur le pipeline SIMD.
 De manière évidente, une telle solution est inacceptable sur le plan des performances, ce montre le besoin de solutions plus efficaces pour gérer les branchements.
 
 Dans leur article, les auteurs font plusieurs propositions, la première est un mécanisme de convergence des threads dès que possible après un (des) branchements divergeant.
@@ -95,9 +95,28 @@ On observe malgré tout que la machine MIMD reste beaucoup plus performante, les
 
 \subsection{Formation dynamique de warps}
 
-Malgré l'utilisation du mécanisme de convergence, on a donc une utilisation sous-optimale de la ligne SIMD lors d'exécution de branchements divergeant. Lors de l'exécution d'un seul warp de threads sur la ligne SIMD, il est malheureusement impossible d'améliorer l'utilisation du matériel.
+Malgré l'utilisation du mécanisme de convergence, on a donc une utilisation sous-optimale de le pipeline SIMD lors d'exécution de branchements divergeant. Lors de l'exécution d'un seul warp de threads sur le pipeline SIMD, il est malheureusement impossible d'améliorer l'utilisation du matériel.
 Dans la plupart des cas cependant, plusieurs warps exécutent le même programme en même temps.
 Les auteurs de l'article proposent donc d'exploiter cette situation en groupant dynamiquement, à l'exécution, les threads de warps différents exécutant le même flux de contrôle.
+
+Leur solution consiste à dynamiquement créer de nouveaux warps pour regrouper ensemble les threads exécutant le même flux de contrôle afin d'avoir un maximum de threads s'exécutant en même temps sur le pipeline SIMD.
+
+\begin{figure}[h]
+   \caption{\label{FUSION} Exemple de formation dynamique de warps}
+   \includegraphics[scale=.5]{fusion}
+\end{figure}
+
+Sur l'exemple figure~\ref{FUSION} deux warps de 4 threads, W0 et W1, exécutent le même code dans lequel se trouve un branchement.
+Sur le graphique, les flèches pleines divergent vers le block A et les flèches blanches divergent vers le block B.
+Le cycle d'exécution du haut correspond à une exécution sans formation dynamique de warps, et celle du bas avec formation dynamique de warps.
+Dans ce cas idéal, deux threads de chaque blocks exécutent A et B, il suffit donc de regrouper ensemble les threads exécutant A dans un nouveau warp W2 et les threads exécutant B dans un nouveau warp W3.
+Ainsi, au lieu d'avoir quatre exécution de blocks avec seulement la moitié du pipeline SIMD utilisée, on l'utilise pleinement grâce aux nouveaux warps formés.
+
+L'article propose que à chaque cycle, le scheduler de threads essaye de former de nouveaux warps de threads à partir des threads disponibles possédant le même PC suivant.
+
+Ce mécanisme peut sembler idéal, cependant quelques problèmes émergent pour lesquels les auteurs de l'article proposent des solutions.
+
+La création de nouveaux warps de threads implique qu'un thread peut potentiellement s'exécuter sur n'importe quelle ligne scalaire du pipeline SIMD, imposant que tous les registres soit accessibles de n'importe quelle de ces lignes.
 
 \section{Résultats}
 

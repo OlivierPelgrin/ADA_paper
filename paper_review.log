@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.17 (TeX Live 2016) (preloaded format=pdflatex 2017.10.28)  29 OCT 2017 16:33
+This is pdfTeX, Version 3.14159265-2.6-1.40.17 (TeX Live 2016) (preloaded format=pdflatex 2017.10.28)  29 OCT 2017 18:41
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -561,28 +561,51 @@ Overfull \hbox (6.23618pt too wide) in paragraph at lines 98--101
  une utilisation
  []
 
-[5] (./paper_review.aux) ) 
+
+Overfull \hbox (10.60957pt too wide) in paragraph at lines 98--101
+\T1/cmr/m/n/10.95 sous-optimale de le pipeline SIMD lors d'exécution de branche
+ments divergeant.
+ []
+
+<Graphiques/fusion.png, id=25, 670.75594pt x 353.82187pt>
+File: Graphiques/fusion.png Graphic file (type png)
+
+<use Graphiques/fusion.png>
+Package pdftex.def Info: Graphiques/fusion.png used on input line 106.
+(pdftex.def)             Requested size: 335.37714pt x 176.91049pt.
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[5]
+Overfull \hbox (3.56076pt too wide) in paragraph at lines 117--118
+[]\T1/cmr/m/n/10.95 Ce mécanisme peut sembler idéal, cependant quelques problèm
+es émergent
+ []
+
+[6 <./Graphiques/fusion.png (PNG copy)>] (./paper_review.aux) ) 
 Here is how much of TeX's memory you used:
- 3115 strings out of 494946
- 41234 string characters out of 6180980
- 102062 words of memory out of 5000000
- 6373 multiletter control sequences out of 15000+600000
+ 3121 strings out of 494946
+ 41355 string characters out of 6180980
+ 102070 words of memory out of 5000000
+ 6378 multiletter control sequences out of 15000+600000
  13438 words of font info for 33 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  38i,6n,30p,463b,439s stack positions out of 5000i,500n,10000p,200000b,80000s
-{/usr/share/texlive/texmf-dist/fonts/enc/dvips/cm-sup
-er/cm-super-t1.enc}</usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/s
-fbx1200.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfbx1440
-.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfbx1728.pfb></
-usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfcc1095.pfb></usr/sha
-re/texlive/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb></usr/share/texl
-ive/texmf-dist/fonts/type1/public/cm-super/sfrm1200.pfb></usr/share/texlive/tex
-mf-dist/fonts/type1/public/cm-super/sfrm1728.pfb></usr/share/texlive/texmf-dist
-/fonts/type1/public/cm-super/sfti1095.pfb>
-Output written on paper_review.pdf (5 pages, 259102 bytes).
+{/usr/share/texl
+ive/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc}</usr/share/texlive/tex
+mf-dist/fonts/type1/public/cm-super/sfbx1200.pfb></usr/share/texlive/texmf-dist
+/fonts/type1/public/cm-super/sfbx1440.pfb></usr/share/texlive/texmf-dist/fonts/
+type1/public/cm-super/sfbx1728.pfb></usr/share/texlive/texmf-dist/fonts/type1/p
+ublic/cm-super/sfcc1095.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/c
+m-super/sfrm1095.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super
+/sfrm1200.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfrm17
+28.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfti1095.pfb>
+
+Output written on paper_review.pdf (6 pages, 299998 bytes).
 PDF statistics:
- 55 PDF objects out of 1000 (max. 8388607)
- 37 compressed objects within 1 object stream
+ 59 PDF objects out of 1000 (max. 8388607)
+ 39 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
- 11 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 16 words of extra memory for PDF output out of 10000 (max. 10000000)
 
